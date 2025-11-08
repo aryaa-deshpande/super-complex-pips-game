@@ -1,0 +1,12 @@
+# Core runtime
+fastapi
+uvicorn
+
+# For data models
+pydantic
+
+# For random generation, math, etc.
+numpy
+
+# For testing
+pytest
