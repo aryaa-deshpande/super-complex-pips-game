@@ -9,6 +9,7 @@ from typing import List
 
 from .models import RunState, Deck, Pip, BoardDef, BoardState, RegionConstraint
 from .map_graph import load_map, _parse_id, visualize_diagram, delete_map
+from .node_actions import handle_node_event
 
 
 
@@ -208,46 +209,19 @@ def debug_cli_run():
             run = enter_node(run, next_id)
             run = handle_node_event(run)
 
+            if run.status == "lost":
+                print("💀 Run status: LOST. Ending trial.")
+                break
+            if run.status == "won":
+                print("🏆 Run status: WON. Ending trial.")
+                break
+
     finally:
         # --- cleanup after run, no matter how we exit the loop ---
         print("🧹 Deleting saved map for a clean next run...")
         delete_map()
         print("✅ Map file removed. Generate a new one next time!")
     
-def handle_node_event(run: RunState):
-    """Perform actions depending on the node type you entered."""
-    node = run.map_graph.nodes[run.current_node_id]
-    node_type = node.node_type
-
-    print(f"\n🔸 Entered node {node.id} ({node_type})")
-
-    # --- Behavior by type ---
-    if node_type == "play":
-        print("🧩 This is a puzzle/combat node. (Placeholder: you solved it!)")
-        # later: hook your puzzle/mini-game logic here
-
-    elif node_type == "event":
-        print("🎲 Random event triggered! You got a mystery bonus.")
-        # later: random effects, story snippets, etc.
-
-    elif node_type == "rest":
-        print("💤 Rest site — you recovered time or health.")
-        run.time_remaining += 60  # gain +1 minute as placeholder
-
-    elif node_type == "trade":
-        print("💰 Merchant visit! (Placeholder: traded items)")
-        # later: trade inventory/pips
-
-    elif node_type == "boss":
-        print("👑 Boss room! Final challenge ahead.")
-        # later: trigger boss puzzle or fight
-
-    elif node_type == "start":
-        print("🚪 Starting node. Nothing happens yet.")
-    else:
-        print("❓ Unknown node type — no behavior defined.")
-
-    return run
 
 # simple manual test
 if __name__ == "__main__":
