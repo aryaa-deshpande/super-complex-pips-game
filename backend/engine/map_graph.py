@@ -6,6 +6,65 @@ from typing import List, Dict, Tuple
 
 from .models import Node, MapGraph
 
+import json
+from pathlib import Path
+
+
+# Where we store the last generated map
+MAP_FILE_PATH = Path(__file__).parent / "latest_map.json"
+
+
+def map_to_dict(mg: MapGraph) -> dict:
+    """Convert MapGraph -> plain dict so we can save as JSON."""
+    return {
+        "start_id": mg.start_id,
+        "boss_id": mg.boss_id,
+        "nodes": [
+            {
+                "id": n.id,
+                "node_type": n.node_type,
+                "next_ids": list(n.next_ids),
+            }
+            for n in mg.nodes.values()
+        ],
+    }
+
+
+def map_from_dict(data: dict) -> MapGraph:
+    """Convert dict (from JSON) -> MapGraph."""
+    nodes = {
+        nd["id"]: Node(
+            id=nd["id"],
+            node_type=nd["node_type"],
+            next_ids=list(nd["next_ids"]),
+        )
+        for nd in data["nodes"]
+    }
+    return MapGraph(
+        nodes=nodes,
+        start_id=data["start_id"],
+        boss_id=data["boss_id"],
+    )
+
+
+def save_map(mg: MapGraph, path: Path = MAP_FILE_PATH) -> None:
+    path.write_text(json.dumps(map_to_dict(mg), indent=2))
+
+
+def load_map(path: Path = MAP_FILE_PATH) -> MapGraph:
+    data = json.loads(path.read_text())
+    return map_from_dict(data)
+
+
+def delete_map(path: Path = MAP_FILE_PATH) -> None:
+    """Delete the saved map file if it exists."""
+    if path.exists():
+        path.unlink()
+        print(f"🧹 Deleted {path.name}")
+    else:
+        print("No saved map to delete.")
+
+        
 Coord = Tuple[int, int]  # (layer, col)
 
 
@@ -548,6 +607,10 @@ if __name__ == "__main__":
 
     validate_map(mg, num_layers=15, num_cols=7)
     print("✅ Map structure valid.\n")
+
+    # SAVE this map so game_logic can reuse it
+    save_map(mg)
+    print(f"💾 Saved map to {MAP_FILE_PATH}")
 
     visualize_diagram(mg, num_layers=15, num_cols=7)
     debug_node_table(mg)
